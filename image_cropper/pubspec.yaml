@@ -4,8 +4,8 @@ version: 6.0.0
 homepage: https://github.com/hnvn/flutter_image_cropper
 
 environment:
-  sdk: '>=2.18.0 <4.0.0'
-  flutter: '>=3.3.0'
+  sdk: ">=2.18.0 <4.0.0"
+  flutter: ">=3.3.0"
 
 flutter:
   plugin:
@@ -22,7 +22,7 @@ dependencies:
   flutter:
     sdk: flutter
   image_cropper_platform_interface: ^5.0.0
-  image_cropper_for_web: ^4.0.0
+  image_cropper_for_web: ^3.0.0
 
 dev_dependencies:
   flutter_test:
