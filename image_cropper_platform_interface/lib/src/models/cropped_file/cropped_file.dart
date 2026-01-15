@@ -5,6 +5,5 @@
 // Copyright note: this code file is copied from `image_picker` plugin
 
 export 'unsupported.dart'
-    if (dart.library.js_interop) 'html.dart'
     if (dart.library.html) 'html.dart'
     if (dart.library.io) 'io.dart';

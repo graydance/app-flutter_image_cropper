@@ -1,75 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:image_cropper_for_web/src/cropper_actionbar.dart';
 import 'package:image_cropper_platform_interface/image_cropper_platform_interface.dart';
 
-class CropperDialog extends StatefulWidget {
+class CropperDialog extends StatelessWidget {
   final Widget cropper;
-  final Function() initCropper;
   final Future<String?> Function() crop;
   final void Function(RotationAngle) rotate;
-  final void Function(num) scale;
   final double cropperContainerWidth;
   final double cropperContainerHeight;
   final WebTranslations translations;
-  final WebThemeData? themeData;
 
   const CropperDialog({
     Key? key,
     required this.cropper,
-    required this.initCropper,
     required this.crop,
     required this.rotate,
-    required this.scale,
     required this.cropperContainerWidth,
     required this.cropperContainerHeight,
     required this.translations,
-    this.themeData,
   }) : super(key: key);
 
   @override
-  State<CropperDialog> createState() => _CropperDialogState();
-}
-
-class _CropperDialogState extends State<CropperDialog> {
-  bool _processing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.initCropper();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
+    return Container(
+      width: cropperContainerWidth + 2 * 24.0,
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.0),
       ),
-      child: Container(
-        width: widget.cropperContainerWidth + 2 * 24.0,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: IntrinsicHeight(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _header(context),
-              const Divider(height: 1.0, thickness: 1.0),
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: 24.0,
-                  left: 24.0,
-                  right: 24.0,
-                  bottom: 8.0,
-                ),
-                child: _body(context),
+      child: IntrinsicHeight(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _header(context),
+            const Divider(height: 1.0, thickness: 1.0),
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 24.0,
+                left: 24.0,
+                right: 24.0,
+                bottom: 8.0,
               ),
-              const Divider(height: 1.0, thickness: 1.0),
-              _footer(context),
-            ],
-          ),
+              child: _body(context),
+            ),
+            const Divider(height: 1.0, thickness: 1.0),
+            _footer(context),
+          ],
         ),
       ),
     );
@@ -83,7 +58,7 @@ class _CropperDialogState extends State<CropperDialog> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            widget.translations.title,
+            translations.title,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ],
@@ -92,31 +67,37 @@ class _CropperDialogState extends State<CropperDialog> {
   }
 
   Widget _body(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Stack(
+      alignment: Alignment.bottomCenter,
       children: [
-        SizedBox(
-          width: widget.cropperContainerWidth,
-          height: widget.cropperContainerHeight,
-          child: ClipRect(
-            child: widget.cropper,
+        Center(
+          child: SizedBox(
+            width: cropperContainerWidth,
+            height: cropperContainerHeight,
+            child: cropper,
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(
-            left: 24.0,
-            right: 24.0,
-            top: 16.0,
-          ),
-          child: CropperActionBar(
-            onRotate: (angle) {
-              widget.rotate(angle);
-            },
-            onScale: (value) {
-              widget.scale(value);
-            },
-            translations: widget.translations,
-            themeData: widget.themeData,
+          padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 5.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () {
+                  rotate(RotationAngle.counterClockwise90);
+                },
+                tooltip: translations.rotateLeftTooltip,
+                icon: const Icon(Icons.rotate_90_degrees_ccw_rounded),
+              ),
+              IconButton(
+                onPressed: () {
+                  rotate(RotationAngle.clockwise90);
+                },
+                tooltip: translations.rotateRightTooltip,
+                icon: const Icon(Icons.rotate_90_degrees_cw_outlined),
+              )
+            ],
           ),
         ),
       ],
@@ -124,53 +105,31 @@ class _CropperDialogState extends State<CropperDialog> {
   }
 
   Widget _footer(BuildContext context) {
-    if (_processing) {
-      return const Align(
-        alignment: Alignment.centerRight,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: SizedBox(
-            width: 24.0,
-            height: 24.0,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.0,
-            ),
+    return ButtonBar(
+      buttonPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+      children: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          style: TextButton.styleFrom(
+            padding:
+                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
           ),
+          child: Text(translations.cancelButton),
         ),
-      );
-    } else {
-      return ButtonBar(
-        buttonPadding: const EdgeInsets.symmetric(horizontal: 16.0),
-        children: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text(widget.translations.cancelButton),
+        ElevatedButton(
+          onPressed: () async {
+            final result = await crop();
+            Navigator.of(context).pop(result);
+          },
+          style: ElevatedButton.styleFrom(
+            padding:
+                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
           ),
-          ElevatedButton(
-            onPressed: () => _doCrop(),
-            child: Text(widget.translations.cropButton),
-          ),
-        ],
-      );
-    }
-  }
-
-  Future<void> _doCrop() async {
-    if (_processing) return;
-    setState(() {
-      _processing = true;
-    });
-    try {
-      final result = await widget.crop();
-      Navigator.of(context).pop(result);
-      return;
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    setState(() {
-      _processing = false;
-    });
+          child: Text(translations.cropButton),
+        ),
+      ],
+    );
   }
 }
